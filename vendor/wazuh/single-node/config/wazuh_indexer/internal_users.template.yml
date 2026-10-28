@@ -1,0 +1,13 @@
+_meta:
+  type: internalusers
+  config_version: 2
+admin:
+  hash: GENERATED_AT_INITIALIZATION
+  reserved: true
+  backend_roles:
+  - admin
+  description: Demo admin user
+kibanaserver:
+  hash: GENERATED_AT_INITIALIZATION
+  reserved: true
+  description: Demo kibanaserver user

@@ -1,5 +1,6 @@
 """Inspect existing ATT&CK entities; do not fabricate an attribution relationship."""
 import os
+from lab_env import load_lab_env
 from pycti import OpenCTIApiClient
 
 
@@ -24,6 +25,7 @@ def find_one(api, external_id, name):
 
 
 def main():
+    load_lab_env()
     client = OpenCTIApiClient(os.environ["OPENCTI_URL"], os.environ["OPENCTI_API_TOKEN"])
     group = find_one(client.intrusion_set, "G0016", "APT29")
     technique = find_one(client.attack_pattern, "T1059.001", "PowerShell")

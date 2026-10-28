@@ -29,8 +29,14 @@ def main():
     # The runnable configuration is intended only for brand-new lab volumes.
     config = ROOT / 'vendor/wazuh/single-node/config'
     users_path = config / 'wazuh_indexer/internal_users.yml'
-    users = yaml.safe_load(users_path.read_text())
+    users = yaml.safe_load((config / 'wazuh_indexer/internal_users.template.yml').read_text())
     image = yaml.safe_load((config.parents[0] / 'docker-compose.yml').read_text())['services']['wazuh.indexer']['image']
+    dashboard_path = config / 'wazuh_dashboard/wazuh.yml'
+    dashboard = yaml.safe_load((config / 'wazuh_dashboard/wazuh.template.yml').read_text())
+    base = (ROOT / 'vendor/misp/template.env').read_text()
+    # Validate all input templates before starting Docker or writing outputs.
+    for host in dashboard['hosts']:
+        for value in host.values(): value['password'] = env['WAZUH_API_PASSWORD']
     # Keep only the two accounts needed by the laboratory.
     users = {k: v for k, v in users.items() if k in {'_meta', 'admin', 'kibanaserver'}}
     for username, key in [('admin', 'WAZUH_INDEXER_PASSWORD'), ('kibanaserver', 'WAZUH_DASHBOARD_PASSWORD')]:
@@ -45,7 +51,6 @@ def main():
         users[username]['hash'] = hashes[0]
     users_path.write_text(yaml.safe_dump(users, sort_keys=False))
     dashboard_path = config / 'wazuh_dashboard/wazuh.yml'
-    dashboard = yaml.safe_load(dashboard_path.read_text())
     for host in dashboard['hosts']:
         for value in host.values(): value['password'] = env['WAZUH_API_PASSWORD']
     dashboard_path.write_text(yaml.safe_dump(dashboard, sort_keys=False))

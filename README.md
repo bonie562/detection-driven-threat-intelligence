@@ -1,9 +1,10 @@
 # Detection Driven Threat Intelligence Companion
 
 Revision: 28 October 2026. Run all commands from this directory on an isolated Linux lab host.
-The book and this directory must be distributed together. Repository: https://github.com/bonie562/detection-driven-threat-intelligence
+Repository: https://github.com/bonie562/detection-driven-threat-intelligence
 
-Status: pre-publication. Live integration validation remains pending; see VALIDATION.md.
+Status: revised candidate. Live integration remains pending; see VALIDATION.md.
+Start with CASE_STUDY.md for the learning path. The book and code revision must match.
 
 ## Scope and versions
 
@@ -28,6 +29,14 @@ constraints conflict. The selected older PyMISP resolves with the other dependen
 requirements-lock.txt records the complete installed resolver result. Review package support
 and image advisories before reusing this baseline outside a disposable lab.
 
+## Acquire the companion
+
+Open the repository link or scan the printed QR code. Read this README, then download
+Code → Download ZIP and extract it, or clone with Git. Open Bash in the extracted
+repository root, where `lab`, `requirements-lock.txt` and `rules/` are visible.
+Run `chmod +x lab` if ZIP extraction did not preserve its executable permission.
+Keep `EDITION.json` with your notes; record `git rev-parse HEAD` when using Git.
+
 ## Prepare the host and Python
 
 Use Linux x86_64 with Docker Engine, Docker Compose v2, Python 3.12, and a working internet connection.
@@ -40,7 +49,7 @@ On Windows 11 use an Ubuntu VM or WSL2 with Docker Desktop integration. Run the 
 python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements-lock.txt
-python test_lab.py
+python -m unittest discover -p 'test_*.py' -v
 sigma check rules/
 python translate.py rules/powershell_child.yml build/local_cti_rules.xml
 sudo sysctl -w vm.max_map_count=262144
@@ -48,7 +57,8 @@ python scripts/initialize.py
 ```
 
 Initialization generates unique credentials, hashes the two indexer passwords using the pinned
-Wazuh indexer image, and prepares the first-boot configuration. It refuses to overwrite an existing
+Wazuh indexer image, and prepares the first-boot configuration from committed, sanitized `.template.yml` inputs.
+Generated outputs remain ignored; the templates contain no usable passwords. It refuses to overwrite an existing
 .env. Use it only before creating the lab volumes; it is not a credential-rotation tool.
 Do not commit .env, generated Wazuh credentials, or MISP working data. Preserve .env for restarts.
 
@@ -102,9 +112,9 @@ python scripts/wazuh_lab.py replay
 ./lab wazuh exec -T wazuh.manager tail -n 100 /var/ossec/logs/alerts/alerts.json
 ```
 
-The native test must pass all seven fixtures. The positive, uppercase and rundll32 fixtures should
+The native test stores output in build/native-<run-id> and must pass all seven fixtures. Positive cases use native -U criteria for rule 100200, level 7 and JSON decoding. The positive, uppercase and rundll32 fixtures should
 match rule 100200 at level 7. The other four fixtures must not match this custom rule, although
-other built-in Wazuh rules may match. The replay should create a live alerts.json entry with
+other built-in Wazuh rules may match. The replay helper uses a unique command-line marker, waits up to 30 seconds, and saves a matching new alert under build/replay-<marker>. It checks the last 2,000 alert lines; a timeout or rotation needs investigation. The expected live alerts.json entry has
 rule.id 100200 and a description containing the source Sigma UUID and SHA-256. The test log is
 /var/ossec/logs/cti-lab.json, monitored as JSON by the supplied manager configuration.
 Allow a few seconds for log collection. wazuh-logtest output alone does not prove live ingestion
@@ -147,6 +157,10 @@ The positive command is benign; a matching alert is a true match to behavior, no
 
 ## MISP intake and OpenCTI indicators
 
+The three Python entry points load the root `.env` as data using python-dotenv.
+Do not run `source .env`: this is not a Bash script. Existing exported environment
+variables take precedence; unset stale lab variables before switching environments.
+
 The synthetic seed uses a separate, temporary write key. In MISP create a lab user/key allowed to
 create and publish events, then put it in MISP_LAB_WRITE_KEY. Create a second retrieval-only key in
 MISP_API_KEY. Keep these keys local. In OpenCTI copy the ID of an appropriate existing marking
@@ -155,9 +169,6 @@ The application token in .env starts as the lab administrator token; use a narro
 for any later operational adaptation.
 
 ```bash
-set -a
-source .env
-set +a
 python seed_misp.py --apply
 python ingest.py --output build/indicators.json
 # Review the JSON candidates and source event before applying them.

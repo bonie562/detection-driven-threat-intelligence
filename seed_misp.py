@@ -1,11 +1,13 @@
 """Create one synthetic lab event; requires a separate lab write key and --apply."""
 import argparse
 import os
+from lab_env import load_lab_env
 from datetime import date
 from pymisp import PyMISP, MISPEvent
 
 
 def main():
+    load_lab_env()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--apply', action='store_true')
     args = parser.parse_args()

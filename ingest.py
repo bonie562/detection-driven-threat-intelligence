@@ -7,6 +7,7 @@ import argparse
 import ipaddress
 import json
 import os
+from lab_env import load_lab_env
 import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -112,6 +113,7 @@ def create_indicator(client, record, source_url, marking_id):
 
 
 def main():
+    load_lab_env()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--apply", action="store_true", help="Create approved indicators in OpenCTI")
     parser.add_argument("--output", default="build/indicators.json")
