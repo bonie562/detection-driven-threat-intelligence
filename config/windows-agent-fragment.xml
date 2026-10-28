@@ -1,0 +1,6 @@
+<!-- Add inside the existing ossec_config in the Windows Wazuh agent configuration. -->
+<localfile>
+  <location>Microsoft-Windows-Sysmon/Operational</location>
+  <log_format>eventchannel</log_format>
+  <query>Event/System[EventID=1]</query>
+</localfile>

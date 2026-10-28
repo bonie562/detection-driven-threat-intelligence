@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")"
+stack="${1:?Usage: ./lab wazuh|misp|opencti COMPOSE_ARGUMENTS}"
+shift
+case "$stack" in
+  wazuh) exec docker compose --env-file .env -p cti-wazuh -f vendor/wazuh/single-node/docker-compose.yml "$@" ;;
+  misp) exec docker compose --env-file vendor/misp/.env -p cti-misp -f vendor/misp/docker-compose.yml "$@" ;;
+  opencti) exec docker compose --env-file .env -p cti-opencti -f config/opencti-compose.yml "$@" ;;
+  *) echo 'Choose wazuh, misp, or opencti' >&2; exit 2 ;;
+esac

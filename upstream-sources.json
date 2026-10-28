@@ -1,0 +1,21 @@
+{
+  "revision_date": "2026-10-28",
+  "wazuh": {
+    "repository": "wazuh/wazuh-docker",
+    "ref": "v4.14.9"
+  },
+  "misp": {
+    "repository": "MISP/misp-docker",
+    "ref": "7e55a0f507012f3699350faab9cdf60a851e2b2f"
+  },
+  "opencti": {
+    "repository": "OpenCTI-Platform/docker",
+    "ref": "60285adb360e3823a334333ae4744255d8ac1821"
+  },
+  "changes": [
+    "Wazuh loopback-only ports and environment-backed credentials",
+    "MISP loopback-only ports, builds/profiles/guard omitted",
+    "OpenCTI six-service subset, one worker, no XTM components",
+    "Image references locked to registry digests where resolution succeeded"
+  ]
+}

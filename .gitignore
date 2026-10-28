@@ -1,0 +1,13 @@
+.env
+.venv/
+__pycache__/
+build/
+vendor/misp/.env
+vendor/misp/configs/
+vendor/misp/logs/
+vendor/misp/files/
+vendor/misp/gnupg/
+vendor/misp/ssl/
+vendor/wazuh/single-node/config/wazuh_indexer_ssl_certs/
+vendor/wazuh/single-node/config/wazuh_indexer/internal_users.yml
+vendor/wazuh/single-node/config/wazuh_dashboard/wazuh.yml

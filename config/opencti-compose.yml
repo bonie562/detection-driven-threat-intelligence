@@ -1,0 +1,140 @@
+services:
+  redis:
+    image: redis@sha256:8a1efc5f479551822b47424ccae982026b633f28818eab0387348120a61e10e2
+    restart: always
+    volumes:
+    - redisdata:/data
+    healthcheck:
+      test:
+      - CMD
+      - redis-cli
+      - ping
+      interval: 10s
+      timeout: 5s
+      retries: 3
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch@sha256:cbf5cd6cfe5532a9c02d510c66d238bf329cd51fe3d57170a2a880aca7d47419
+    volumes:
+    - esdata:/usr/share/elasticsearch/data
+    environment:
+    - discovery.type=single-node
+    - xpack.ml.enabled=false
+    - xpack.security.enabled=false
+    - thread_pool.search.queue_size=5000
+    - logger.org.elasticsearch.discovery="ERROR"
+    - ES_JAVA_OPTS=-Xms${ELASTIC_MEMORY_SIZE} -Xmx${ELASTIC_MEMORY_SIZE}
+    restart: always
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl -s http://elasticsearch:9200/_cluster/health?wait_for_status=yellow >/dev/null
+        || exit 1
+      interval: 5s
+      timeout: 3s
+      retries: 50
+  minio:
+    image: pgsty/silo@sha256:7bb2aff6b89efe1cb1303c10fc21d579447434ed06649ac9ec05a5e2dbf30ad7
+    volumes:
+    - s3data:/data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    command: server /data
+    restart: always
+    healthcheck:
+      test:
+      - CMD
+      - mc
+      - ready
+      - local
+      interval: 10s
+      timeout: 5s
+      retries: 3
+  rabbitmq:
+    image: rabbitmq@sha256:1cc652597e8d31d2bb4afc3be60f84961fe17aa4edc5bf067cbf9834afcc441b
+    environment:
+    - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+    - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+    - RABBITMQ_NODENAME=rabbit01@localhost
+    volumes:
+    - type: bind
+      source: ./rabbitmq.conf
+      target: /etc/rabbitmq/rabbitmq.conf
+    - amqpdata:/var/lib/rabbitmq
+    restart: always
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+  opencti:
+    image: opencti/platform@sha256:f85ce6b6980575be4ade236ed09b7d256a522bc5fc95db664e9ae25f606251a4
+    environment:
+    - NODE_OPTIONS=--max-old-space-size=8096
+    - APP__PORT=8080
+    - APP__BASE_URL=${OPENCTI_EXTERNAL_SCHEME}://${OPENCTI_HOST}:${OPENCTI_PORT}
+    - APP__ADMIN__EMAIL=${OPENCTI_ADMIN_EMAIL}
+    - APP__ADMIN__PASSWORD=${OPENCTI_ADMIN_PASSWORD}
+    - APP__ADMIN__TOKEN=${OPENCTI_ADMIN_TOKEN}
+    - APP__ENCRYPTION_KEY=${OPENCTI_ENCRYPTION_KEY}
+    - REDIS__HOSTNAME=redis
+    - REDIS__PORT=6379
+    - ELASTICSEARCH__URL=http://elasticsearch:9200
+    - ELASTICSEARCH__NUMBER_OF_REPLICAS=0
+    - MINIO__ENDPOINT=minio
+    - MINIO__PORT=9000
+    - MINIO__USE_SSL=false
+    - MINIO__ACCESS_KEY=${MINIO_ROOT_USER}
+    - MINIO__SECRET_KEY=${MINIO_ROOT_PASSWORD}
+    - RABBITMQ__HOSTNAME=rabbitmq
+    - RABBITMQ__PORT=5672
+    - RABBITMQ__PORT_MANAGEMENT=15672
+    - RABBITMQ__MANAGEMENT_SSL=false
+    - RABBITMQ__USERNAME=${RABBITMQ_DEFAULT_USER}
+    - RABBITMQ__PASSWORD=${RABBITMQ_DEFAULT_PASS}
+    - SMTP__HOSTNAME=${SMTP_HOSTNAME}
+    - SMTP__PORT=25
+    - PROVIDERS__LOCAL__STRATEGY=LocalStrategy
+    - APP__HEALTH_ACCESS_KEY=${OPENCTI_HEALTHCHECK_ACCESS_KEY}
+    ports:
+    - 127.0.0.1:8080:8080
+    depends_on:
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: always
+    healthcheck:
+      test:
+      - CMD
+      - wget
+      - -qO-
+      - http://opencti:8080/health?health_access_key=${OPENCTI_HEALTHCHECK_ACCESS_KEY}
+      interval: 10s
+      timeout: 5s
+      retries: 20
+  worker:
+    image: opencti/worker@sha256:688f7d8195cef9c3f9bd28b03c700baddef69bdbb865b27e9b86e1ca60b1a152
+    environment:
+    - OPENCTI_URL=http://opencti:8080
+    - OPENCTI_TOKEN=${OPENCTI_ADMIN_TOKEN}
+    depends_on:
+      opencti:
+        condition: service_healthy
+    restart: always
+volumes:
+  esdata: null
+  s3data: null
+  redisdata: null
+  amqpdata: null

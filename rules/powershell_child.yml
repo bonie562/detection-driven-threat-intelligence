@@ -1,0 +1,27 @@
+title: PowerShell Spawning Command Shell or Rundll32
+id: 2f6c4d9e-8f1a-4a6c-bc4e-8a2e9c1a0001
+status: experimental
+description: >
+  Flags a PowerShell parent launching cmd.exe or rundll32.exe.
+  This behavior also occurs in benign administration and needs triage.
+author: CTI Engineering
+date: 2026-01-10
+modified: 2026-10-28
+references:
+  - https://attack.mitre.org/techniques/T1059/001/
+tags:
+  - attack.execution
+  - attack.t1059.001
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection:
+    ParentImage|endswith: '\powershell.exe'
+    Image|endswith:
+      - '\cmd.exe'
+      - '\rundll32.exe'
+  condition: selection
+falsepositives:
+  - Administrative automation launching command shells or Windows utilities
+level: medium

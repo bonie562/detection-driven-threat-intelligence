@@ -1,0 +1,9 @@
+{
+  "positive": true,
+  "positive_case": true,
+  "positive_rundll32": true,
+  "negative_parent": false,
+  "negative_child": false,
+  "negative_suffix": false,
+  "negative_eventid": false
+}
