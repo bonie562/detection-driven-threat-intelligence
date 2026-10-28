@@ -9,7 +9,10 @@ Eleven offline unittest cases pass: the original six logic tests plus five setup
 and replay regressions. The new checks cover clean initialization from committed
 templates using simulated Docker hash output, refusal to overwrite .env, missing
 template preflight, hash failure, literal dotenv loading and replay correlation.
-These are offline checks. They do not establish Docker startup or native Wazuh
+The same eleven tests also pass against the reconstructed published file set.
+Standalone Docker Compose 2.39.4 configuration validation returns exit zero for
+Wazuh, OpenCTI and MISP using generated test settings and simulated hashing.
+These are offline and configuration-only checks. They do not establish Docker startup or native Wazuh
 execution. No Docker executable is available in this environment.
 
 The earlier GitHub package omitted generated paths that initialization also used
